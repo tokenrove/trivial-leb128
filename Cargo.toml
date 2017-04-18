@@ -1,0 +1,11 @@
+[package]
+name = "leb128"
+version = "0.1.0"
+authors = ["Julian Squires <julian@cipht.net>"]
+publish = false
+
+[lib]
+name = "leb128"
+
+[dev-dependencies]
+quickcheck = "0.4"
