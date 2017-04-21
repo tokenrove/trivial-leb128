@@ -1,3 +1,17 @@
+//! Trivial LEB128 encoding and decoding.
+
+#![warn(
+    missing_copy_implementations,
+    missing_debug_implementations,
+    missing_docs,
+    trivial_casts,
+    trivial_numeric_casts,
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications,
+    variant_size_differences,
+)]
+
 #[cfg(test)]
 #[macro_use]
 extern crate quickcheck;
@@ -5,25 +19,25 @@ extern crate quickcheck;
 use std::fmt::{Display, Formatter};
 use std::error::Error as StdError;
 
-#[derive(Debug, PartialEq)]
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Error {
-    ResultTooLarge
+    ResultTooLarge,
 }
 
 impl StdError for Error {
-    fn description(&self) -> &'static str {
-        match *self {
-            Error::ResultTooLarge => "result too large"
-        }
-    }
+    fn description(&self) -> &'static str { "LEB128 error" }
 }
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), ::std::fmt::Error> {
-        f.write_str(StdError::description(self))
+        f.write_str(match *self {
+            Error::ResultTooLarge => "result too large"
+        })
     }
 }
 
+/// Write a LEB128-encoded value into `buf`.
 pub fn write<T: Into<u64>>(buf: &mut Vec<u8>, value: T) -> Result<(), Error>
 {
     let mut v: u64 = value.into();
@@ -34,6 +48,7 @@ pub fn write<T: Into<u64>>(buf: &mut Vec<u8>, value: T) -> Result<(), Error>
     }
 }
 
+/// Read a bounded LEB128-encoded value from an iterator, `bytes`.
 pub fn read<T: Iterator<Item=u8>>(bytes: &mut T, upper_bound: Option<u64>)
                                   -> Result<Option<u64>, Error>
 {
@@ -53,11 +68,12 @@ pub fn read<T: Iterator<Item=u8>>(bytes: &mut T, upper_bound: Option<u64>)
 
 #[cfg(test)]
 mod tests {
+    #![allow(trivial_casts)]    // for quickcheck
+
     use super::*;
     use quickcheck::TestResult;
 
     quickcheck! {
-
         fn round_trip(value: u64) -> bool {
             let mut buf = Vec::new();
             write(&mut buf, value).unwrap();
